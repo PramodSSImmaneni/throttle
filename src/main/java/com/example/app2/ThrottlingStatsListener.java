@@ -1,16 +1,18 @@
 package com.example.app2;
 
-import com.datatorrent.api.Operator;
-import com.datatorrent.api.StatsListener;
-import com.google.common.collect.Maps;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.google.common.collect.Maps;
+
+import com.datatorrent.api.Operator;
+import com.datatorrent.api.StatsListener;
 
 /**
  * Created by pramod on 9/27/16.
@@ -25,10 +27,6 @@ public class ThrottlingStatsListener implements StatsListener, Serializable {
     // restore input operator to normal speed
     long windowThreshold = 100;
     boolean normalState = true;
-
-    // Wait time between requests
-    long requestInterval = 30000;
-    long lastRequest;
 
     @Override
     public Response processStats(BatchedOperatorStats batchedOperatorStats)
@@ -46,6 +44,7 @@ public class ThrottlingStatsListener implements StatsListener, Serializable {
             if (value > maxWindow) maxWindow = value;
         }
         logger.debug("Operator {} min window {} max window {}", operatorId, minWindow, maxWindow);
+
         if (normalState && ((maxWindow - minWindow) > windowThreshold)) {
             /*
             // Send request to operator to slow down
@@ -68,20 +67,17 @@ public class ThrottlingStatsListener implements StatsListener, Serializable {
             normalState = true;
         }
 
-        long currTime = System.currentTimeMillis();
-        if ((currTime - lastRequest) >= requestInterval) {
-            if (!normalState) {
-                // Send request to operator to slow down
-                List<OperatorRequest> operatorRequests = new ArrayList<OperatorRequest>();
-                operatorRequests.add(new InputSlowdownRequest());
-                response.operatorRequests = operatorRequests;
-            } else {
-                // Send request to operator to get back to normal
-                List<OperatorRequest> operatorRequests = new ArrayList<OperatorRequest>();
-                operatorRequests.add(new InputNormalRequest());
-                response.operatorRequests = operatorRequests;
-            }
-            lastRequest = currTime;
+        // In future send the request only when there is a state transition
+        if (!normalState) {
+            // Send request to operator to slow down
+            List<OperatorRequest> operatorRequests = new ArrayList<OperatorRequest>();
+            operatorRequests.add(new InputSlowdownRequest());
+            response.operatorRequests = operatorRequests;
+        } else {
+            // Send request to operator to get back to normal
+            List<OperatorRequest> operatorRequests = new ArrayList<OperatorRequest>();
+            operatorRequests.add(new InputNormalRequest());
+            response.operatorRequests = operatorRequests;
         }
 
         return response;
