@@ -46,6 +46,7 @@ public class ThrottlingStatsListener implements StatsListener, Serializable {
         logger.debug("Operator {} min window {} max window {}", operatorId, minWindow, maxWindow);
 
         if (normalState && ((maxWindow - minWindow) > windowThreshold)) {
+            // In future send the request here which will happen only on a state change
             /*
             // Send request to operator to slow down
             logger.info("Sending suspend request");
@@ -56,6 +57,7 @@ public class ThrottlingStatsListener implements StatsListener, Serializable {
             logger.info("Setting suspend");
             normalState = false;
         } else if (!normalState && ((maxWindow - minWindow) <= windowThreshold)) {
+            // In future send the request here which will happen only on a state change
             /*
             // Send request to operator to get back to normal
             logger.info("Sending normal request");
@@ -67,7 +69,6 @@ public class ThrottlingStatsListener implements StatsListener, Serializable {
             normalState = true;
         }
 
-        // In future send the request only when there is a state transition
         if (!normalState) {
             // Send request to operator to slow down
             List<OperatorRequest> operatorRequests = new ArrayList<OperatorRequest>();
